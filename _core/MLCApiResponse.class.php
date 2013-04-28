@@ -47,6 +47,7 @@ class MLCApiResponse{
     	}
     }
     public function RenderAsJSON(){
+
     	$intPage = MLCApiDriver::GetQueryString(MLCApiQS::PAGE);
 		if(is_null($intPage)){
 			$intPage = 0;
@@ -57,10 +58,11 @@ class MLCApiResponse{
 		}
     	$arrResponse = array('head'=>array());
 
-		
+
     	if(is_string($this->mixBody)){
         	$arrResponse['body'] = $this->mixBody;
         }elseif(is_array($this->mixBody)){
+
         	$arrBody = array();
 			$this->Head('total', count($this->mixBody));
 			$this->Head('page', $intPage);
@@ -77,6 +79,8 @@ class MLCApiResponse{
 		        }
         	}*/
 			$arrResponse['body'] = $arrBody;
+        }elseif(method_exists($this->mixBody, '__toArray')){
+            $arrResponse['body'] = $this->mixBody->__toArray();
         }elseif(method_exists($this->mixBody, '__toJson')){
 			$arrResponse['body'] = $this->mixBody->__toJson(0,0, true);
         }elseif(is_null($this->mixBody)){
@@ -94,17 +98,23 @@ class MLCApiResponse{
     	}
     }
 	public function ConvertObjectsToArray($arrData){
+
 		foreach($arrData as $intIndex => $mixData){
 			if(is_array($mixData)){
 				$arrData[$intIndex] = self::ConvertObjectsToArray($mixData);
 			}elseif(is_object($mixData)){
-				if(!method_exists($mixData, '__toJson')){
-					throw new Exception("Objects passed in to function '" . __FUNCTION__ . "' must have a '__toJson' method");	
-				}
-				$arrData[$intIndex] = $mixData->__toJson(0,0, true);
+                if(method_exists($mixData, '__toArray')){
+                    $arrData[$intIndex] = $mixData->__toArray();
+                }elseif(method_exists($mixData, '__toJson')){
+                    $arrData[$intIndex] = $mixData->__toJson(0,0, true);
+				}else{
+                    throw new Exception("Objects passed in to function '" . __FUNCTION__ . "' must have a '__toJson' method");
+                }
+
 					
 			}
 		}
+
 		return $arrData;
 	}
     public function RenderAsXML(){
